@@ -35,6 +35,18 @@ body {
     width: 300px;
   }
 
+  button[type=button]:hover,
+  button[type=button]:focus {
+    background: red;
+    cursor: pointer;
+  }
+  button[type=button] {
+    background: darkred;
+    border: 0;
+    color: #fff;
+    padding: 10px 20px;
+  }
+
   button {
     background: darkgreen;
     border: 0;
