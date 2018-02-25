@@ -64,6 +64,7 @@
       appendTdText(row, $inputAno.get()[0].value);
       appendTdText(row, $inputPlaca.get()[0].value);
       appendTdRectangle(row, $inputCor.get()[0].value);
+      appendTdButton(row, 'Remover', handleRemoverLinha);
 
       $tableCarro.get()[0].appendChild(row);
     }
@@ -76,12 +77,21 @@
       return cellText;
     }
 
+    function appendTdButton(row, text, handle) {
+      var cell = document.createElement('td');
+      var cellButton = document.createElement('button');
+      cellButton.setAttribute('type', 'button');
+      cellButton.addEventListener('click', handle);
+      cellButton.innerText = text;
+      cell.appendChild(cellButton);
+      row.appendChild(cell);
+      return cellButton;
+    }
+
     function appendTdImage(row, src) {
       var cell = document.createElement('td');
       var cellImage = document.createElement('img');
       cellImage.setAttribute('src', src);
-      //cellImage.setAttribute('width', '100%');
-      //cellImage.setAttribute('height', '100%');
       cell.appendChild(cellImage);
       row.appendChild(cell);
       return cellImage;
@@ -92,6 +102,10 @@
       cell.style.backgroundColor = color;
       row.appendChild(cell);
       return cell;
+    }
+
+    function handleRemoverLinha(e){
+      e.target.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode);
     }
 
     function carregar() {
