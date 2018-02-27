@@ -1,41 +1,6 @@
 (function (win, document) {
   'use strict';
 
-  /*
-  Vamos estruturar um pequeno app utilizando módulos.
-  Nosso APP vai ser um cadastro de carros. Vamos fazê-lo por partes.
-  A primeira etapa vai ser o cadastro de veículos, de deverá funcionar da
-  seguinte forma:
-  - No início do arquivo, deverá ter as informações da sua empresa - nome e
-  telefone (já vamos ver como isso vai ser feito)
-  - Ao abrir a tela, ainda não teremos carros cadastrados. Então deverá ter
-  um formulário para cadastro do carro, com os seguintes campos:
-    - Imagem do carro (deverá aceitar uma URL)
-    - Marca / Modelo
-    - Ano
-    - Placa
-    - Cor
-    - e um botão "Cadastrar"
- 
-  Logo abaixo do formulário, deverá ter uma tabela que irá mostrar todos os
-  carros cadastrados. Ao clicar no botão de cadastrar, o novo carro deverá
-  aparecer no final da tabela.
- 
-  Agora você precisa dar um nome para o seu app. Imagine que ele seja uma
-  empresa que vende carros. Esse nosso app será só um catálogo, por enquanto.
-  Dê um nome para a empresa e um telefone fictício, preechendo essas informações
-  no arquivo company.json que já está criado.
- 
-  Essas informações devem ser adicionadas no HTML via Ajax.
- 
-  Parte técnica:
-  Separe o nosso módulo de DOM criado nas últimas aulas em
-  um arquivo DOM.js.
- 
-  E aqui nesse arquivo, faça a lógica para cadastrar os carros, em um módulo
-  que será nomeado de "app".
-  */
-
   function app() {
     var $companyName = new DOM('[data-js="company-name"]');
     var $companyFone = new DOM('[data-js="company-fone"]');
@@ -48,6 +13,8 @@
     var $inputCadastro = new DOM('[data-js="submit"]');
     var $tableCarro = new DOM('[data-js="lista-carro"]');
     var ajax = new XMLHttpRequest();
+    var ajaxCars = new XMLHttpRequest();
+    var ajaxPostCars = new XMLHttpRequest();
 
     $formCarro.on('submit', handleSubmitForm);
 
@@ -57,16 +24,18 @@
     }
 
     function cadastrar() {
-      var row = document.createElement('tr');
+      var car = {
+        image: $inputImagem.get()[0].value,
+        brandModel: $inputMarca.get()[0].value,
+        year: $inputAno.get()[0].value,
+        plate: $inputPlaca.get()[0].value,
+        color: $inputCor.get()[0].value
+      };
 
-      appendTdImage(row, $inputImagem.get()[0].value);
-      appendTdText(row, $inputMarca.get()[0].value);
-      appendTdText(row, $inputAno.get()[0].value);
-      appendTdText(row, $inputPlaca.get()[0].value);
-      appendTdRectangle(row, $inputCor.get()[0].value);
-      appendTdButton(row, 'Remover', handleRemoverLinha);
-
-      $tableCarro.get()[0].appendChild(row);
+      ajaxPostCars.open('POST', 'http://localhost:3000/car');
+      ajaxPostCars.setRequestHeader("Content-type", "application/json");
+      ajaxPostCars.send(JSON.stringify(car));
+      ajaxPostCars.addEventListener('readystatechange', handleReadyStateChangePostCar);
     }
 
     function appendTdText(row, text) {
@@ -109,14 +78,37 @@
     }
 
     function carregar() {
+      carregarCompany();
+      carregarCarros();
+    };
+
+    function carregarCompany() {
       ajax.open('GET', 'company.json');
       ajax.send();
       ajax.addEventListener('readystatechange', handleReadyStateChange);
     };
 
-    function handleReadyStateChange() {
+    function carregarCarros() {
+      ajaxCars.open('GET', 'http://localhost:3000/car');
+      ajaxCars.send();
+      ajaxCars.addEventListener('readystatechange', handleReadyStateChangeCar);
+    };
+
+    function handleReadyStateChange(func) {
       if (isRequestOk()) {
         fillCompany();
+      }
+    }
+
+    function handleReadyStateChangeCar(func) {
+      if (isRequestCarsOk()) {
+        fillCars();
+      }
+    }
+
+    function handleReadyStateChangePostCar(func) {
+      if (isRequestPostCarsOk()) {
+        carregarCarros();
       }
     }
 
@@ -130,14 +122,53 @@
       $companyFone.get()[0].textContent = data.phone;
     }
 
+    function fillCars(){
+      $tableCarro.get()[0].innerHTML = '';
+
+      var cars = parseDataCars();
+      if(!cars)
+        return;
+      
+      Array.prototype.forEach.call(cars, function(car){
+        var row = document.createElement('tr');
+        appendTdImage(row, car.image);
+        appendTdText(row, car.brandModel);
+        appendTdText(row, car.year);
+        appendTdText(row, car.plate);
+        appendTdRectangle(row, car.color);
+        appendTdButton(row, 'Remover', handleRemoverLinha);
+
+        $tableCarro.get()[0].appendChild(row);
+      });  
+      
+    }
+
     function isRequestOk() {
       return ajax.readyState === 4;
+    }
+
+    function isRequestCarsOk() {
+      return ajaxCars.readyState === 4;
+    }
+
+    function isRequestPostCarsOk() {
+      return ajaxPostCars.readyState === 4;
     }
 
     function parseData() {
       var result = null;
       try {
         result = JSON.parse(ajax.responseText);
+      } catch (e) {
+        result = null;
+      }
+      return result;
+    }
+
+    function parseDataCars() {
+      var result = null;
+      try {
+        result = JSON.parse(ajaxCars.responseText);
       } catch (e) {
         result = null;
       }
@@ -152,7 +183,8 @@
     }
 
     return {
-      carregar: carregar
+      carregar: carregar,
+      carrregarCarros: carregarCarros
     };
   }
 
