@@ -15,6 +15,7 @@
     var ajax = new XMLHttpRequest();
     var ajaxCars = new XMLHttpRequest();
     var ajaxPostCars = new XMLHttpRequest();
+    var ajaxDeleteCars = new XMLHttpRequest();
 
     $formCarro.on('submit', handleSubmitForm);
 
@@ -38,6 +39,14 @@
       ajaxPostCars.addEventListener('readystatechange', handleReadyStateChangePostCar);
     }
 
+    function remover(plate){
+
+      ajaxPostCars.open('DELETE', 'http://localhost:3000/car');
+      ajaxPostCars.setRequestHeader("Content-type", "application/json");
+      ajaxPostCars.send(JSON.stringify({"plate": plate}));
+      ajaxPostCars.addEventListener('readystatechange', handleReadyStateChangeDeleteCar);
+    }
+
     function appendTdText(row, text) {
       var cell = document.createElement('td');
       var cellText = document.createTextNode(text);
@@ -46,11 +55,13 @@
       return cellText;
     }
 
-    function appendTdButton(row, text, handle) {
+    function appendTdButton(row, text, handle, plate) {
       var cell = document.createElement('td');
       var cellButton = document.createElement('button');
       cellButton.setAttribute('type', 'button');
       cellButton.addEventListener('click', handle);
+      if(plate)
+        cellButton.setAttribute('data-plate', plate);
       cellButton.innerText = text;
       cell.appendChild(cellButton);
       row.appendChild(cell);
@@ -74,7 +85,8 @@
     }
 
     function handleRemoverLinha(e){
-      e.target.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode);
+      event.preventDefault();
+      remover(e.target.getAttribute('data-plate'));
     }
 
     function carregar() {
@@ -112,6 +124,12 @@
       }
     }
 
+    function handleReadyStateChangeDeleteCar(func) {
+      if (isRequestDeleteCarsOk()) {
+        carregarCarros();
+      }
+    }
+
     function fillCompany() {
       var data = parseData();
       if (!data) {
@@ -136,7 +154,7 @@
         appendTdText(row, car.year);
         appendTdText(row, car.plate);
         appendTdRectangle(row, car.color);
-        appendTdButton(row, 'Remover', handleRemoverLinha);
+        appendTdButton(row, 'Remover', handleRemoverLinha, car.plate);
 
         $tableCarro.get()[0].appendChild(row);
       });  
@@ -153,6 +171,10 @@
 
     function isRequestPostCarsOk() {
       return ajaxPostCars.readyState === 4;
+    }
+
+    function isRequestDeleteCarsOk() {
+      return ajaxDeleteCars.readyState === 4;
     }
 
     function parseData() {
